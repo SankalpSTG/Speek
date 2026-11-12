@@ -1,0 +1,17 @@
+[Unit]
+Description=Speek server: MCP for the Speek app on 127.0.0.1 (port in ~/.config/speek/server.json)
+After=network-online.target
+
+[Service]
+# The folder Speek's server code is in: set it to yours.
+WorkingDirectory=/ABSOLUTE/PATH/TO/speek/server
+# claude (chats) lives in ~/.local/bin, which systemd's user PATH lacks.
+Environment=PATH=%h/.local/bin:/usr/local/bin:/usr/bin:/bin
+ExecStart=/usr/bin/python3 server.py serve
+Restart=always
+RestartSec=5
+# Sessions it starts (claude --bg) must outlive a server restart.
+KillMode=process
+
+[Install]
+WantedBy=default.target

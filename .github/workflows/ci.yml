@@ -1,0 +1,48 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  app:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - uses: android-actions/setup-android@v3
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Build the app
+        run: ./gradlew assembleDebug lintDebug testDebugUnitTest
+
+  server:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Compile the server
+        run: python -m compileall -q server
+      - name: Server tests
+        run: python -m unittest discover -s server/tests -v
+      - name: PROTOCOL.md matches the server's tools
+        run: |
+          python server/server.py protocol > /tmp/tools.md
+          sed -n '/<!-- tools:begin -->/,/<!-- tools:end -->/p' PROTOCOL.md | sed '1d;$d' > /tmp/doc.md
+          diff -u /tmp/doc.md /tmp/tools.md
+      - name: Start it and answer MCP
+        run: |
+          mkdir -p ~/.config/speek
+          cp server/config.example/server.json ~/.config/speek/
+          python server/server.py token
+          python server/server.py serve &
+          sleep 2
+          TOKEN=$(grep MCP_TOKEN ~/.config/speek/server.env | cut -d= -f2-)
+          curl -sf http://127.0.0.1:8765/health
+          curl -sf http://127.0.0.1:8765/mcp -H "Authorization: Bearer $TOKEN" \
+            -H 'Content-Type: application/json' \
+            -d '{"jsonrpc":"2.0","id":1,"method":"tools/list","params":{}}' | grep -q '"chat_events"'
