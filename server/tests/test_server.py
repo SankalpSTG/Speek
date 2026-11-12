@@ -175,5 +175,30 @@ class Extensions(SpeekTest):
         self.server.EXTENSIONS.clear()
 
 
+    def test_the_anonymous_example_keeps_its_conversations(self):
+        cfg = dict(CONFIG, extensions=[str(SERVER / "examples" / "anon_ext.py")])
+        (Path(self.home.name) / ".config" / "speek" / "server.json").write_text(json.dumps(cfg))
+        self.server.EXTENSIONS.clear()
+        self.server.load_extensions()
+        ext = self.server.EXTENSIONS[0]
+        started = []
+        ext.run = lambda n, row, text, first: started.append((n, text, first))  # no real claude in tests
+        n = json.loads(self.call("anon_new", label="research", text="look into X")["content"][0]["text"])["n"]
+        self.assertEqual(started, [(n, "look into X", True)])
+        row = ext.index()[n]
+        p = ext.transcript(row)
+        p.parent.mkdir(parents=True)
+        p.write_text(json.dumps({"type": "assistant", "timestamp": "2026-11-13T03:00:00Z",
+                                 "message": {"content": [{"type": "text", "text": "On it."}]}}) + "\n")
+        ev = json.loads(self.call("anon_events", n=n, after=0, timeout=0, limit=10)["content"][0]["text"])
+        self.assertEqual([e["text"] for e in ev["events"]], ["On it."])
+        self.call("anon_rename", n=n, label="X research")
+        rows = json.loads(self.call("anon_chats")["content"][0]["text"])["sessions"]
+        self.assertEqual((rows[0]["label"], rows[0]["last"]), ("X research", "On it."))
+        self.call("anon_delete", n=n)
+        self.assertEqual(json.loads(self.call("anon_chats")["content"][0]["text"])["sessions"], [])
+        self.server.EXTENSIONS.clear()
+
+
 if __name__ == "__main__":
     unittest.main()

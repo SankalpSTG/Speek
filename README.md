@@ -125,11 +125,13 @@ app has two screens that only extensions light up:
 
 - a **status sheet** of your own agents or jobs with on/off switches, when the server offers
   `dashboard`, `agents`, `agent_set` and `workspace_set`;
-- an **Anonymous tab** of background sessions the server runs itself, when it offers `anon_*`.
+- an **Anonymous tab** of background conversations the server runs itself, when it offers
+  `anon_chats` (and the other `anon_*` tools).
 
 Their exact arguments and JSON are in [PROTOCOL.md](PROTOCOL.md) ("Optional tools").
-`server/examples/status_ext.py` is a small working extension that shows the status sheet: list
-it in `extensions`, restart, and the chart icon appears in the app.
+Two small working extensions show how: `server/examples/status_ext.py` lights up the status sheet
+(the chart icon), and `server/examples/anon_ext.py` the Anonymous tab, as headless `claude -p`
+conversations. List one in `extensions` and restart the server.
 
 ## License
 

@@ -32,8 +32,8 @@ implements it; a Claude reaches the human through the same endpoint (`send`).
 
 ## Optional tools (server extensions)
 
-A server may add these through an extension (see `server/server.py` and the working example
-`server/examples/status_ext.py`). The app looks at `tools/list` and shows each screen only when
+A server may add these through an extension (see `server/server.py` and the working examples
+`server/examples/status_ext.py` and `server/examples/anon_ext.py`). The app looks at `tools/list` and shows each screen only when
 its tools are there. Every answer is one text content item holding the JSON below.
 
 **Status sheet** (shown when `dashboard` exists):
